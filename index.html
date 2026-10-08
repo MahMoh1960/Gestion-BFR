@@ -2,20 +2,231 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Modélisation BFR</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
     <link rel="apple-touch-icon" href="icon-192x192.png">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --purple: #9b59b6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.6em;
+            margin-top: 0;
+        }
+        .kpi-box {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .kpi-value {
+            font-size: 2.8em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .kpi-subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .control-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+        /* Visualisation graphique */
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            height: 220px;
+            gap: 10px;
+            margin-top: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+        }
+        .bar {
+            width: 80%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            color: white;
+            font-weight: bold;
+            border-radius: 6px 6px 0 0;
+            transition: height 0.3s ease;
+            padding-bottom: 5px;
+        }
+        .bar-label {
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #555;
+            font-weight: bold;
+            text-align: center;
+        }
+        #bar-dio { background: var(--accent); }
+        #bar-dso { background: var(--purple); }
+        #bar-dpo { background: var(--danger); }
+        #bar-bfr { background: var(--success); }
+    </style>
 </head>
 <body>
-    <h1>Simulateur d'optimisation du BFR</h1>
+
+    <div class="container">
+        <h1>Optimisation Stratégique du BFR</h1>
+
+        <div class="kpi-box">
+            <div>Besoin en Fonds de Roulement</div>
+            <div class="kpi-value" id="bfr-result">55 jours</div>
+            <div class="kpi-subtitle">de Chiffre d'Affaires</div>
+        </div>
+
+        <div class="chart-container">
+            <div class="bar-wrapper">
+                <div class="bar" id="bar-dio"></div>
+                <div class="bar-label">Stocks<br>(DIO)</div>
+            </div>
+            <div class="bar-wrapper">
+                <div class="bar" id="bar-dso"></div>
+                <div class="bar-label">Clients<br>(DSO)</div>
+            </div>
+            <div class="bar-wrapper">
+                <div class="bar" id="bar-dpo"></div>
+                <div class="bar-label">Fournisseurs<br>(DPO)</div>
+            </div>
+            <div class="bar-wrapper">
+                <div class="bar" id="bar-bfr"></div>
+                <div class="bar-label">BFR Total</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <div class="control-group" style="border-left-color: var(--accent);">
+                <div class="control-header">
+                    <span>Rotation des Stocks (DIO)</span>
+                    <span id="val-dio">45 jours</span>
+                </div>
+                <input type="range" id="input-dio" min="0" max="150" value="45">
+            </div>
+
+            <div class="control-group" style="border-left-color: var(--purple);">
+                <div class="control-header">
+                    <span>Crédit Clients (DSO)</span>
+                    <span id="val-dso">60 jours</span>
+                </div>
+                <input type="range" id="input-dso" min="0" max="150" value="60">
+            </div>
+
+            <div class="control-group" style="border-left-color: var(--danger);">
+                <div class="control-header">
+                    <span>Crédit Fournisseurs (DPO)</span>
+                    <span id="val-dpo">50 jours</span>
+                </div>
+                <input type="range" id="input-dpo" min="0" max="150" value="50">
+            </div>
+        </div>
+    </div>
+
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js');
             });
         }
+
+        const inputDIO = document.getElementById('input-dio');
+        const inputDSO = document.getElementById('input-dso');
+        const inputDPO = document.getElementById('input-dpo');
+        
+        const valDIO = document.getElementById('val-dio');
+        const valDSO = document.getElementById('val-dso');
+        const valDPO = document.getElementById('val-dpo');
+        const resultBFR = document.getElementById('bfr-result');
+
+        const barDIO = document.getElementById('bar-dio');
+        const barDSO = document.getElementById('bar-dso');
+        const barDPO = document.getElementById('bar-dpo');
+        const barBFR = document.getElementById('bar-bfr');
+
+        function calculateAndUpdate() {
+            const dio = parseInt(inputDIO.value);
+            const dso = parseInt(inputDSO.value);
+            const dpo = parseInt(inputDPO.value);
+            
+            const bfr = Math.max(0, dio + dso - dpo);
+            const realBfr = dio + dso - dpo;
+
+            valDIO.textContent = dio + ' jours';
+            valDSO.textContent = dso + ' jours';
+            valDPO.textContent = dpo + ' jours';
+            resultBFR.textContent = realBfr + ' jours';
+
+            document.querySelector('.kpi-box').style.backgroundColor = realBfr < 0 ? '#8e44ad' : (realBfr > 90 ? '#c0392b' : '#2c3e50');
+
+            const maxScale = 200; 
+            barDIO.style.height = (dio / maxScale * 100) + '%';
+            barDIO.textContent = dio;
+            
+            barDSO.style.height = (dso / maxScale * 100) + '%';
+            barDSO.textContent = dso;
+            
+            barDPO.style.height = (dpo / maxScale * 100) + '%';
+            barDPO.textContent = dpo;
+            
+            barBFR.style.height = (Math.abs(realBfr) / maxScale * 100) + '%';
+            barBFR.textContent = realBfr;
+            barBFR.style.background = realBfr < 0 ? '#8e44ad' : '#2ecc71';
+        }
+
+        inputDIO.addEventListener('input', calculateAndUpdate);
+        inputDSO.addEventListener('input', calculateAndUpdate);
+        inputDPO.addEventListener('input', calculateAndUpdate);
+
+        calculateAndUpdate();
     </script>
 </body>
 </html>
