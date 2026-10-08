@@ -2,7 +2,7 @@
   "name": "Optimiseur de BFR & Stratégie",
   "short_name": "BFR Optim",
   "description": "Application de modélisation et d'optimisation du Fonds de Roulement.",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2c3e50",

@@ -1,10 +1,10 @@
-const CACHE_NAME = 'bfr-app-cache-v1';
+const CACHE_NAME = 'bfr-app-cache-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png'
+  './',
+  'index.html',
+  'manifest.json',
+  'icon-192x192.png',
+  'icon-512x512.png'
 ];
 
 self.addEventListener('install', event => {
